@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+	<property name="LOGS_ABSOLUTE_PATH" value="./logs" />
+
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<layout class="ch.qos.logback.classic.PatternLayout">
+			<Pattern>%d{HH:mm} %-5level %logger{36} - %msg%n</Pattern>
+		</layout>
+	</appender>
+
+	<appender name="SAMPLE" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>[%d{yyyy-MM-dd HH:mm:ss}:%-3relative][%thread] %-5level %logger{35} - %msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<appender name="ROLLING" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${LOGS_ABSOLUTE_PATH}/logback.log</file>
+		<encoder>
+			<pattern>[%d{yyyy-MM-dd HH:mm:ss}:%-3relative][%thread] %-5level %logger{35} - %msg%n</pattern>
+		</encoder>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${LOGS_ABSOLUTE_PATH}/logback.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+			<timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+				<!-- or whenever the file size reaches 100MB -->
+				<maxFileSize>5MB</maxFileSize>
+				<!-- kb, mb, gb -->
+			</timeBasedFileNamingAndTriggeringPolicy>
+			<maxHistory>30</maxHistory>
+		</rollingPolicy>
+	</appender>
+	<appender name="ELS_ROLLING" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${LOGS_ABSOLUTE_PATH}/els_logback.log</file>
+		<encoder>
+			<pattern>[%d{yyyy-MM-dd HH:mm:ss}:%-3relative][%thread] %-5level %logger{35} - %msg%n</pattern>
+		</encoder>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${LOGS_ABSOLUTE_PATH}/els_logback.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+			<timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+				<!-- or whenever the file size reaches 100MB -->
+				<maxFileSize>5MB</maxFileSize>
+				<!-- kb, mb, gb -->
+			</timeBasedFileNamingAndTriggeringPolicy>
+			<maxHistory>30</maxHistory>
+		</rollingPolicy>
+	</appender>
+
+	<appender name="ELASTIC" class="com.internetitem.logback.elasticsearch.ElasticsearchAppender">
+		<url>http://localhost:9200/_bulk</url>
+		<!--<index>logs-%date{yyyy-MM-dd}</index>-->
+		<index>seonmo</index>
+		<type>tester</type>
+		<loggerName>es-logger</loggerName> <!-- optional -->
+		<!--<errorLoggerName>es-error-logger</errorLoggerName> &lt;!&ndash; optional &ndash;&gt;-->
+		<connectTimeout>30000</connectTimeout> <!-- optional (in ms, default 30000) -->
+		<errorsToStderr>false</errorsToStderr> <!-- optional (default false) -->
+		<includeCallerData>false</includeCallerData> <!-- optional (default false) -->
+		<logsToStderr>false</logsToStderr> <!-- optional (default false) -->
+		<maxQueueSize>104857600</maxQueueSize> <!-- optional (default 104857600) -->
+		<maxRetries>3</maxRetries> <!-- optional (default 3) -->
+		<readTimeout>30000</readTimeout> <!-- optional (in ms, default 30000) -->
+		<sleepTime>250</sleepTime> <!-- optional (in ms, default 250) -->
+		<rawJsonMessage>false</rawJsonMessage> <!-- optional (default false) -->
+		<includeMdc>false</includeMdc> <!-- optional (default false) -->
+		<maxMessageSize>100</maxMessageSize> <!-- optional (default -1 -->
+		<!--<authentication class="com.internetitem.logback.elasticsearch.config.BasicAuthentication" /> &lt;!&ndash; optional &ndash;&gt;-->
+		<properties>
+			<property>
+				<name>host</name>
+				<value>${HOSTNAME}</value>
+				<allowEmpty>false</allowEmpty>
+			</property>
+			<property>
+				<name>severity</name>
+				<value>%level</value>
+			</property>
+			<property>
+				<name>thread</name>
+				<value>%thread</value>
+			</property>
+			<property>
+				<name>stacktrace</name>
+				<value>%ex</value>
+			</property>
+			<property>
+				<name>logger</name>
+				<value>%logger</value>
+			</property>
+		</properties>
+		<headers>
+			<header>
+				<name>Content-Type</name>
+				<value>application/json</value>
+			</header>
+		</headers>
+	</appender>
+
+
+	<!--	<logger name="com.apress.spring" level="DEBUG">
+			<appender-ref ref="SAMPLE" />
+		</logger>
+		-->
+	<logger name="com.example.demo" level="ERROR">
+		<!--<appender-ref ref="ROLLING" />-->
+		<appender-ref ref="ELASTIC" />
+	</logger>
+
+	<logger name="es-error-logger" level="INFO" additivity="false">
+		<appender-ref ref="ROLLING" />
+	</logger>
+
+	<!--<logger name="es-logger" level="INFO" additivity="false">-->
+		<!--<appender name="ES_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">-->
+			<!--&lt;!&ndash; ... &ndash;&gt;-->
+			<!--<encoder>-->
+				<!--<pattern>%msg</pattern> &lt;!&ndash; This pattern is important, otherwise it won't be the raw Elasticsearch format anyomre &ndash;&gt;-->
+			<!--</encoder>-->
+		<!--</appender>-->
+	<!--</logger>-->
+
+<!--
+
+	<logger name="es-error-logger" level="INFO">
+		<appender-ref ref="ELS_ROLLING" />
+	</logger>
+
+	<logger name="es-logger" level="INFO" additivity="false">
+		<appender name="ES_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+			&lt;!&ndash; ... &ndash;&gt;
+			<encoder>
+				<pattern>%msg</pattern> &lt;!&ndash; This pattern is important, otherwise it won't be the raw Elasticsearch format anyomre &ndash;&gt;
+			</encoder>
+		</appender>
+	</logger>
+-->
+
+
+	<root level="info">
+		<appender-ref ref="STDOUT" />
+	</root>
+</configuration>
